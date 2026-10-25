@@ -72,43 +72,54 @@ function labelFor(k: string) { return k === 'facebook' ? 'Facebook' : k === 'ins
 function PlayerCard({ p, onOpen }: { p: Player; onOpen: () => void }) {
   const age = ageFromDob(p.dateOfBirth)
   return (
-    <article className="card">
-      {p.portraitUrl ? <img className="portrait" src={p.portraitUrl} alt={`${p.name} portrait`} loading="lazy" /> : (
-        <div className="avatar"><b>{p.number}</b><span>{p.position}</span></div>
-      )}
-      <h3>{p.name}</h3>
-      <p className="muted small">#{p.number} • {p.position}{p.captain ? ' • Captain' : ''}{p.viceCaptain ? ' • Vice-Captain' : ''}{!p.isActive ? ' • Inactive' : ''}</p>
-      <p className="muted small">{p.nationality}{age !== null ? ` • Age ${age}` : ''}</p>
-      <p className="small">{p.bio}</p>
-      <button className="btn smallbtn" onClick={onOpen}>View profile</button>
-    </article>
-  )
-}
-function MatchCard({ m }: { m: Match }) {
-  const r = resultOf(m)
-  return (
-    <article className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
-        <span className="tag">{m.competition || m.homeOrAway}</span>
-        {m.status === 'live' && <span className="live-badge">● LIVE</span>}
-        {r && <span className={`result ${r}`}>{r === 'W' ? 'Win' : r === 'D' ? 'Draw' : 'Loss'}</span>}
-        {m.status === 'upcoming' && <span className="tag sample">Upcoming</span>}
+    <article className="player-card" onClick={onOpen} role="button" tabIndex={0}>
+      <div className="player-image-wrapper">
+        {p.portraitUrl ? <img className="portrait" src={p.portraitUrl} alt={`${p.name} portrait`} loading="lazy" /> : (
+          <div className="avatar"><b>{p.number}</b></div>
+        )}
+        <div className="player-number">{p.number}</div>
       </div>
-      <h3>BRS vs {m.opponent}</h3>
-      {m.opponentLogoUrl && <img className="opp-logo" src={m.opponentLogoUrl} alt={`${m.opponent} logo`} loading="lazy" />}
-      {m.status === 'completed' || m.status === 'live' ? (
-        <p className="score">BRS {m.brsScore ?? '—'}<span className="vs">—</span>{m.opponentScore ?? '—'} {m.opponent}</p>
-      ) : <p className="score">vs {m.opponent}</p>}
-      <p className="muted small">{m.date} • Kickoff {m.kickoff}<br />{m.venue}</p>
-      {m.goalscorers && <p className="small"><strong>Goalscorers:</strong> {m.goalscorers}</p>}
-      {m.report && <p className="small">{m.report}</p>}
+      <div className="player-info">
+        <h3>{p.name}</h3>
+        <p className="position-tag">{p.position}</p>
+        <p className="muted small">{p.nationality}{age !== null ? ` • Age ${age}` : ''}{p.captain ? ' • (C)' : ''}{p.viceCaptain ? ' • (VC)' : ''}</p>
+      </div>
     </article>
   )
 }
 
-// Image picker: shows a preview BEFORE saving, but the preview is never
-// stored. On save the file is uploaded to Supabase Storage and the permanent
-// public URL is saved. Existing URL can also be kept or typed in.
+function MatchCard({ m }: { m: Match }) {
+  const r = resultOf(m)
+  return (
+    <article className="match-card">
+      <div className="match-header">
+        <span className="tag">{m.competition || m.homeOrAway}</span>
+        {m.status === 'live' && <span className="live-badge">● LIVE</span>}
+        {r && <span className={`result-badge ${r}`}>{r === 'W' ? 'W' : r === 'D' ? 'D' : 'L'}</span>}
+      </div>
+      <div className="match-teams">
+        <div className="team">
+          <span className="team-name">BRS</span>
+        </div>
+        <div className="score-box">
+          {m.status === 'completed' || m.status === 'live' ? (
+            <span>{m.brsScore ?? '-'} : {m.opponentScore ?? '-'}</span>
+          ) : <span className="time">{m.kickoff}</span>}
+        </div>
+        <div className="team">
+          {m.opponentLogoUrl && <img className="opp-logo" src={m.opponentLogoUrl} alt={`${m.opponent} logo`} loading="lazy" />}
+          <span className="team-name">{m.opponent}</span>
+        </div>
+      </div>
+      <div className="match-footer">
+        <p className="muted small">{m.date} • {m.venue}</p>
+        {m.status === 'upcoming' && <p className="tag sample" style={{marginTop: '0.5rem'}}>Upcoming</p>}
+      </div>
+    </article>
+  )
+}
+
+// Image picker: shows a preview BEFORE saving
 function ImagePicker({ label, value, onChange, folder }: { label: string; value: string; onChange: (url: string) => void; folder: string }) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
@@ -273,7 +284,7 @@ export default function App() {
   const logoSrc = settings.logoUrl || '/logo.png'
   const enabledSocialCount = (Object.values(settings.socialLinks) as { url: string; enabled: boolean }[]).filter((l) => l.enabled && l.url).length
 
-  // Admin form state (kept in the main component so saves can reload the site)
+  // Admin form state
   const emptyPlayer: Player = { id: '', name: '', number: 0, position: 'Forward', nationality: '', bio: '', captain: false, viceCaptain: false, published: true, featured: false, isActive: true, portraitUrl: null, dateOfBirth: null, appearances: null, goals: null, assists: null }
   const [playerForm, setPlayerForm] = useState<Player>(emptyPlayer)
   const [matchForm, setMatchForm] = useState<Match>({ id: '', opponent: '', opponentLogoUrl: null, date: '', kickoff: '16:00', venue: '', competition: '', homeOrAway: 'Home', status: 'upcoming', brsScore: null, opponentScore: null, report: '', goalscorers: '' })
@@ -302,7 +313,7 @@ export default function App() {
             <img src={logoSrc} alt={`${settings.clubName} official logo`} />
             <span><b>{settings.clubName}</b><span>{settings.shortName} • OFFICIAL CLUB SITE</span></span>
           </button>
-          <button className="burger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation menu">Menu</button>
+          <button className="burger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation menu">MENU</button>
           <nav className={`navlinks ${menuOpen ? 'open' : ''}`} aria-label="Main navigation">
             {PAGES.map((p) => (
               <button key={p.id} className={page === p.id ? 'active' : ''} onClick={() => go(p.id)}>{p.label}</button>
@@ -311,15 +322,15 @@ export default function App() {
           </nav>
         </div>
       </header>
+      
       {loading && <div className="wrap"><div className="banner" role="status">Loading club data…</div></div>}
       {loadError && <div className="wrap"><div className="banner backend" role="alert">Could not load live data: {loadError} Showing sample data instead.</div></div>}
 
       {page === 'home' && (
         <main>
-          <div className="hero" style={activeBanner ? { backgroundImage: `linear-gradient(180deg, rgba(6,26,35,.55), rgba(6,26,35,.92)), url(${activeBanner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}>
-            <div className="stadium-lights" aria-hidden="true"><span /><span /><span /></div>
+          <div className="hero" style={activeBanner ? { backgroundImage: `url(${activeBanner.imageUrl})` } : undefined}>
             <div className="wrap hero-inner">
-              <div>
+              <div className="hero-content">
                 <span className="tag">{settings.clubName} • {settings.shortName}</span>
                 <h1>{activeBanner ? activeBanner.headline || settings.heroHeadline : settings.heroHeadline}</h1>
                 <p>{activeBanner ? activeBanner.subtitle || settings.heroSubtitle : settings.heroSubtitle}</p>
@@ -333,7 +344,7 @@ export default function App() {
               </div>
               <div className="hero-crest">
                 <img src={logoSrc} alt={`${settings.clubName} official logo`} />
-                <p>Official club crest — supplied by the club, unaltered</p>
+                <p>Official club crest</p>
               </div>
             </div>
           </div>
@@ -401,7 +412,7 @@ export default function App() {
             ))}
           </div>
           {visiblePlayers.length === 0 ? <div className="empty">No published, active players match this search yet.</div> : (
-            <div className="grid">{visiblePlayers.map((p) => <PlayerCard key={p.id} p={p} onOpen={() => setSelectedPlayer(p)} />)}</div>
+            <div className="grid three">{visiblePlayers.map((p) => <PlayerCard key={p.id} p={p} onOpen={() => setSelectedPlayer(p)} />)}</div>
           )}
         </section></main>
       )}
@@ -411,11 +422,11 @@ export default function App() {
           <span className="tag">Team management</span><h2>Management team</h2>
           {dataSource === 'sample' && <SampleBanner />}
           {staff.filter((s) => s.published).length === 0 ? <div className="empty">No management members published yet.</div> : (
-            <div className="grid">
+            <div className="grid three">
               {[...staff].filter((s) => s.published).sort((a, b) => a.order - b.order).map((s) => (
                 <article className="card" key={s.id}>
-                  {s.portraitUrl ? <img className="portrait" src={s.portraitUrl} alt={`${s.name} portrait`} loading="lazy" /> : <div className="avatar"><b>{s.role.charAt(0)}</b><span>{s.role}</span></div>}
-                  <h3>{s.name}</h3><p className="muted small">{s.role}</p><p className="small">{s.bio}</p>
+                  {s.portraitUrl ? <img className="news-img" src={s.portraitUrl} alt={`${s.name} portrait`} loading="lazy" /> : <div className="avatar" style={{fontSize:'3rem',opacity:0.2}}><b>{s.role.charAt(0)}</b></div>}
+                  <h3>{s.name}</h3><p className="tag">{s.role}</p><p className="small">{s.bio}</p>
                 </article>
               ))}
             </div>
@@ -442,7 +453,7 @@ export default function App() {
             </div>
           )}
           {matchList.length === 0 ? <div className="empty">No matches in this category yet.</div> : (
-            <div className="grid three">{matchList.map((m) => <div key={m.id} onClick={() => setSelectedMatch(m)} style={{ cursor: 'pointer' }}><MatchCard m={m} /></div>)}</div>
+            <div className="grid two">{matchList.map((m) => <div key={m.id} onClick={() => setSelectedMatch(m)} style={{ cursor: 'pointer' }}><MatchCard m={m} /></div>)}</div>
           )}
           <p className="muted small" style={{ marginTop: 16 }}>Tap a match card for its full report and goalscorers, when available.</p>
         </section></main>
@@ -505,7 +516,7 @@ export default function App() {
               <p><strong>Location:</strong> {settings.location || <span className="muted">To be confirmed — not yet supplied</span>}</p>
               <p><strong>Social media:</strong></p>
               <SocialLinks links={settings.socialLinks} />
-              {dataSource === 'sample' && <div className="banner">Do not publish invented contact details. Fill in the real details in Admin → Settings once Supabase is connected.</div>}
+              {dataSource === 'sample' && <div className="banner" style={{marginTop: '1rem'}}>Do not publish invented contact details. Fill in the real details in Admin → Settings once Supabase is connected.</div>}
             </div>
             <div className="card">
               <h3>Send a message</h3>
@@ -524,7 +535,7 @@ export default function App() {
             <div>
               <BackendBanner />
               <h3>Setup — do this once, from your phone</h3>
-              <ol>
+              <ol style={{ lineHeight: '1.8' }}>
                 <li>Create a free project at supabase.com, then open <strong>SQL Editor → New query</strong> and run <code>supabase/schema.sql</code>, then <code>supabase/schema-v2.sql</code> from this project.</li>
                 <li>In Supabase <strong>Storage</strong>, confirm the public bucket <code>club-images</code> exists (the v2 SQL creates it).</li>
                 <li>In Supabase <strong>Authentication → Users → Add user</strong>, create the admin account, copy its UUID, and run: <code>insert into public.admin_roles (user_id, role) values ('&lt;uuid&gt;', 'admin');</code></li>
@@ -532,7 +543,7 @@ export default function App() {
                 <li>In Cloudflare Pages → your site → <strong>Settings → Environment variables (Production)</strong>, add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>, then redeploy.</li>
                 <li>Open <code>/admin</code> on your phone and sign in. Full steps: <code>docs/DEPLOYMENT.md</code>.</li>
               </ol>
-              <pre style={{ whiteSpace: 'pre-wrap', background: '#0B2531', padding: 12, fontSize: '.85rem' }}>{`VITE_SUPABASE_URL=https://your-project-ref.supabase.co\nVITE_SUPABASE_ANON_KEY=your-supabase-anon-public-key-here`}</pre>
+              <pre style={{ whiteSpace: 'pre-wrap', background: 'var(--bg-surface)', padding: 12, fontSize: '.85rem' }}>{`VITE_SUPABASE_URL=https://your-project-ref.supabase.co\nVITE_SUPABASE_ANON_KEY=your-supabase-anon-public-key-here`}</pre>
               <p className="muted small">Until those steps are done, the public site keeps showing clearly labelled sample data and no admin changes are saved anywhere.</p>
             </div>
           )}
@@ -555,9 +566,9 @@ export default function App() {
           )}
           {isSupabaseConfigured && isAdmin && (
             <div>
-              <p className="muted">Signed in as <strong>{authUserEmail}</strong> • Data source: Supabase (changes save permanently and update the public site). <button className="btn smallbtn ghost" onClick={doLogout}>Log out</button></p>
+              <p className="muted" style={{ marginBottom: '2rem' }}>Signed in as <strong>{authUserEmail}</strong> • Data source: Supabase (changes save permanently and update the public site). <button className="btn smallbtn ghost" style={{marginLeft:'1rem'}} onClick={doLogout}>Log out</button></p>
               <div className="admin">
-                <nav aria-label="Admin navigation">
+                <nav className="filters" aria-label="Admin navigation">
                   {(['overview', 'players', 'banners', 'matches', 'news', 'management', 'social', 'settings'] as AdminTab[]).map((t) => (
                     <button key={t} className={adminTab === t ? 'active' : ''} onClick={() => { setAdminTab(t); setAdminNotice(''); setAdminError('') }}>{t.charAt(0).toUpperCase() + t.slice(1)}</button>
                   ))}
@@ -570,7 +581,7 @@ export default function App() {
                   {adminTab === 'overview' && (
                     <div>
                       <h3>Overview</h3>
-                      <div className="grid" style={{ gridTemplateColumns: 'repeat(2,1fr)' }}>
+                      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                         <div className="card"><div className="stat-num">{players.length}</div><div className="stat-label">Total players</div></div>
                         <div className="card"><div className="stat-num">{staff.length}</div><div className="stat-label">Management members</div></div>
                         <div className="card"><div className="stat-num">{stats.played}</div><div className="stat-label">Matches played</div></div>
@@ -581,10 +592,10 @@ export default function App() {
                         <div className="card"><div className="stat-num">{enabledSocialCount}</div><div className="stat-label">Social links enabled</div></div>
                       </div>
                       <h3 style={{ marginTop: 24 }}>Quick actions</h3>
-                      <p>
-                        <button className="btn smallbtn" onClick={() => setAdminTab('players')}>Add player</button>{' '}
-                        <button className="btn smallbtn ghost" onClick={() => setAdminTab('matches')}>Add match</button>{' '}
-                        <button className="btn smallbtn ghost" onClick={() => setAdminTab('banners')}>Add banner</button>{' '}
+                      <p className="filters">
+                        <button className="btn smallbtn" onClick={() => setAdminTab('players')}>Add player</button>
+                        <button className="btn smallbtn ghost" onClick={() => setAdminTab('matches')}>Add match</button>
+                        <button className="btn smallbtn ghost" onClick={() => setAdminTab('banners')}>Add banner</button>
                         <button className="btn smallbtn ghost" onClick={() => setAdminTab('news')}>Add news</button>
                       </p>
                       <h3>Recent matches</h3>
@@ -617,12 +628,12 @@ export default function App() {
                         </div>
                         <label>Biography</label><textarea value={playerForm.bio} onChange={(e) => setPlayerForm({ ...playerForm, bio: e.target.value })} />
                         <ImagePicker label="Player photo (JPG, PNG or WebP, max 5 MB)" value={playerForm.portraitUrl || ''} folder="players" onChange={(url) => setPlayerForm({ ...playerForm, portraitUrl: url || null })} />
-                        <p>
-                          <label style={{ display: 'inline-block', marginRight: 16 }}><input type="checkbox" checked={playerForm.captain} onChange={(e) => setPlayerForm({ ...playerForm, captain: e.target.checked })} /> Captain</label>
-                          <label style={{ display: 'inline-block', marginRight: 16 }}><input type="checkbox" checked={playerForm.viceCaptain} onChange={(e) => setPlayerForm({ ...playerForm, viceCaptain: e.target.checked })} /> Vice-captain</label>
-                          <label style={{ display: 'inline-block', marginRight: 16 }}><input type="checkbox" checked={playerForm.published} onChange={(e) => setPlayerForm({ ...playerForm, published: e.target.checked })} /> Published</label>
-                          <label style={{ display: 'inline-block', marginRight: 16 }}><input type="checkbox" checked={playerForm.featured} onChange={(e) => setPlayerForm({ ...playerForm, featured: e.target.checked })} /> Featured on home</label>
-                          <label style={{ display: 'inline-block' }}><input type="checkbox" checked={playerForm.isActive} onChange={(e) => setPlayerForm({ ...playerForm, isActive: e.target.checked })} /> Active</label>
+                        <p style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', margin: '1rem 0' }}>
+                          <label><input type="checkbox" checked={playerForm.captain} onChange={(e) => setPlayerForm({ ...playerForm, captain: e.target.checked })} /> Captain</label>
+                          <label><input type="checkbox" checked={playerForm.viceCaptain} onChange={(e) => setPlayerForm({ ...playerForm, viceCaptain: e.target.checked })} /> Vice-captain</label>
+                          <label><input type="checkbox" checked={playerForm.published} onChange={(e) => setPlayerForm({ ...playerForm, published: e.target.checked })} /> Published</label>
+                          <label><input type="checkbox" checked={playerForm.featured} onChange={(e) => setPlayerForm({ ...playerForm, featured: e.target.checked })} /> Featured</label>
+                          <label><input type="checkbox" checked={playerForm.isActive} onChange={(e) => setPlayerForm({ ...playerForm, isActive: e.target.checked })} /> Active</label>
                         </p>
                         <p><button className="btn" type="submit" disabled={saving}>{playerForm.id ? 'Update player' : 'Add player'}</button>{' '}
                           {playerForm.id && <button type="button" className="btn ghost" onClick={() => setPlayerForm(emptyPlayer)}>Cancel edit</button>}</p>
@@ -631,9 +642,9 @@ export default function App() {
                         <thead><tr><th>Name</th><th>No.</th><th>Position</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>{players.filter((p) => (p.name + ' ' + p.position).toLowerCase().includes(adminSearch.toLowerCase())).map((p) => (
                           <tr key={p.id}>
-                            <td>{p.name}{p.captain ? ' (Captain)' : ''}{p.viceCaptain ? ' (Vice-Captain)' : ''}</td><td>{p.number}</td><td>{p.position}</td><td>{p.published ? (p.isActive ? 'Published' : 'Published, inactive') : 'Draft'}</td>
-                            <td>
-                              <button className="btn smallbtn" onClick={() => setPlayerForm(p)}>Edit</button>{' '}
+                            <td>{p.name}{p.captain ? ' (C)' : ''}{p.viceCaptain ? ' (VC)' : ''}</td><td>{p.number}</td><td>{p.position}</td><td>{p.published ? (p.isActive ? 'Pub/Active' : 'Pub/Inactive') : 'Draft'}</td>
+                            <td style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn smallbtn" onClick={() => setPlayerForm(p)}>Edit</button>
                               <button className="btn smallbtn danger" onClick={() => { if (confirmDelete(p.name)) adminSave(() => deletePlayer(p.id), 'Player deleted. The public squad is updated.') }}>Delete</button>
                             </td>
                           </tr>
@@ -656,7 +667,7 @@ export default function App() {
                           <div><label>Button URL</label><input value={bannerForm.buttonUrl} onChange={(e) => setBannerForm({ ...bannerForm, buttonUrl: e.target.value })} placeholder="/squad or https://…" /></div>
                         </div>
                         <label>Order (lowest first)</label><input type="number" value={bannerForm.displayOrder} onChange={(e) => setBannerForm({ ...bannerForm, displayOrder: Number(e.target.value) })} />
-                        <p><label><input type="checkbox" checked={bannerForm.isActive} onChange={(e) => setBannerForm({ ...bannerForm, isActive: e.target.checked })} /> Active — show on the home hero</label></p>
+                        <p style={{ margin: '1rem 0' }}><label><input type="checkbox" checked={bannerForm.isActive} onChange={(e) => setBannerForm({ ...bannerForm, isActive: e.target.checked })} /> Active — show on the home hero</label></p>
                         <p><button className="btn" type="submit" disabled={saving}>{bannerForm.id ? 'Update banner' : 'Add banner'}</button>{' '}
                           {bannerForm.id && <button type="button" className="btn ghost" onClick={() => setBannerForm({ id: '', imageUrl: '', headline: '', subtitle: '', buttonText: '', buttonUrl: '', isActive: false, displayOrder: 0 })}>Cancel edit</button>}</p>
                       </form>
@@ -664,9 +675,9 @@ export default function App() {
                         <thead><tr><th>Order</th><th>Headline</th><th>Active</th><th>Actions</th></tr></thead>
                         <tbody>{[...banners].sort((a, b) => a.displayOrder - b.displayOrder).map((b) => (
                           <tr key={b.id}><td>{b.displayOrder}</td><td>{b.headline || '(club headline)'}</td><td>{b.isActive ? 'Yes' : 'No'}</td>
-                            <td>
-                              <button className="btn smallbtn" onClick={() => setBannerForm(b)}>Edit</button>{' '}
-                              <button className="btn smallbtn" onClick={() => adminSave(() => saveBanner({ ...b, isActive: !b.isActive }, b.id), b.isActive ? 'Banner deactivated.' : 'Banner activated.')}>{b.isActive ? 'Deactivate' : 'Activate'}</button>{' '}
+                            <td style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn smallbtn" onClick={() => setBannerForm(b)}>Edit</button>
+                              <button className="btn smallbtn ghost" onClick={() => adminSave(() => saveBanner({ ...b, isActive: !b.isActive }, b.id), b.isActive ? 'Banner deactivated.' : 'Banner activated.')}>{b.isActive ? 'Deactivate' : 'Activate'}</button>
                               <button className="btn smallbtn danger" onClick={() => { if (confirmDelete('this banner')) adminSave(() => deleteBanner(b.id), 'Banner deleted.') }}>Delete</button>
                             </td>
                           </tr>
@@ -701,8 +712,8 @@ export default function App() {
                         <thead><tr><th>Date</th><th>Match</th><th>Score</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>{[...sortedMatches].reverse().map((m) => (
                           <tr key={m.id}><td>{m.date}</td><td>BRS vs {m.opponent}</td><td>{m.status === 'completed' || m.status === 'live' ? `${m.brsScore ?? '—'} – ${m.opponentScore ?? '—'}` : 'Upcoming'}</td><td>{m.status}</td>
-                            <td>
-                              <button className="btn smallbtn" onClick={() => setMatchForm(m)}>Edit</button>{' '}
+                            <td style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn smallbtn" onClick={() => setMatchForm(m)}>Edit</button>
                               <button className="btn smallbtn danger" onClick={() => { if (confirmDelete(`the match vs ${m.opponent}`)) adminSave(() => deleteMatch(m.id), 'Match deleted.') }}>Delete</button>
                             </td>
                           </tr>
@@ -724,7 +735,7 @@ export default function App() {
                         <label>Excerpt</label><textarea value={newsForm.excerpt} onChange={(e) => setNewsForm({ ...newsForm, excerpt: e.target.value })} />
                         <label>Body</label><textarea value={newsForm.body} onChange={(e) => setNewsForm({ ...newsForm, body: e.target.value })} />
                         <ImagePicker label="Article image (optional, JPG/PNG/WebP, max 5 MB)" value={newsForm.imageUrl || ''} folder="news" onChange={(url) => setNewsForm({ ...newsForm, imageUrl: url || null })} />
-                        <p><label><input type="checkbox" checked={newsForm.published} onChange={(e) => setNewsForm({ ...newsForm, published: e.target.checked })} /> Published</label></p>
+                        <p style={{ margin: '1rem 0' }}><label><input type="checkbox" checked={newsForm.published} onChange={(e) => setNewsForm({ ...newsForm, published: e.target.checked })} /> Published</label></p>
                         <p><button className="btn" type="submit" disabled={saving}>{newsForm.id ? 'Update article' : 'Add article'}</button>{' '}
                           {newsForm.id && <button type="button" className="btn ghost" onClick={() => setNewsForm({ id: '', title: '', category: 'Club Event', date: new Date().toISOString().slice(0, 10), excerpt: '', body: '', published: true, imageUrl: null })}>Cancel edit</button>}</p>
                       </form>
@@ -732,8 +743,8 @@ export default function App() {
                         <thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Published</th><th>Actions</th></tr></thead>
                         <tbody>{news.map((n) => (
                           <tr key={n.id}><td>{n.date}</td><td>{n.title}</td><td>{n.category}</td><td>{n.published ? 'Yes' : 'No'}</td>
-                            <td>
-                              <button className="btn smallbtn" onClick={() => setNewsForm(n)}>Edit</button>{' '}
+                            <td style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn smallbtn" onClick={() => setNewsForm(n)}>Edit</button>
                               <button className="btn smallbtn danger" onClick={() => { if (confirmDelete(`“${n.title}”`)) adminSave(() => deleteNews(n.id), 'News article deleted.') }}>Delete</button>
                             </td>
                           </tr>
@@ -754,7 +765,7 @@ export default function App() {
                         </div>
                         <label>Biography</label><textarea value={staffForm.bio} onChange={(e) => setStaffForm({ ...staffForm, bio: e.target.value })} />
                         <ImagePicker label="Portrait (optional, JPG/PNG/WebP, max 5 MB)" value={staffForm.portraitUrl || ''} folder="management" onChange={(url) => setStaffForm({ ...staffForm, portraitUrl: url || null })} />
-                        <p><label><input type="checkbox" checked={staffForm.published} onChange={(e) => setStaffForm({ ...staffForm, published: e.target.checked })} /> Published</label></p>
+                        <p style={{ margin: '1rem 0' }}><label><input type="checkbox" checked={staffForm.published} onChange={(e) => setStaffForm({ ...staffForm, published: e.target.checked })} /> Published</label></p>
                         <p><button className="btn" type="submit" disabled={saving}>{staffForm.id ? 'Update member' : 'Add member'}</button>{' '}
                           {staffForm.id && <button type="button" className="btn ghost" onClick={() => setStaffForm({ id: '', name: '', role: 'Head Coach', bio: '', order: 0, portraitUrl: null, published: true })}>Cancel edit</button>}</p>
                       </form>
@@ -762,8 +773,8 @@ export default function App() {
                         <thead><tr><th>Order</th><th>Name</th><th>Role</th><th>Actions</th></tr></thead>
                         <tbody>{[...staff].sort((a, b) => a.order - b.order).map((s) => (
                           <tr key={s.id}><td>{s.order}</td><td>{s.name}</td><td>{s.role}</td>
-                            <td>
-                              <button className="btn smallbtn" onClick={() => setStaffForm(s)}>Edit</button>{' '}
+                            <td style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn smallbtn" onClick={() => setStaffForm(s)}>Edit</button>
                               <button className="btn smallbtn danger" onClick={() => { if (confirmDelete(s.name)) adminSave(() => deleteStaff(s.id), 'Management member deleted.') }}>Delete</button>
                             </td>
                           </tr>
@@ -779,10 +790,10 @@ export default function App() {
                       <p className="muted small">These links are loaded from saved website settings — they are not hardcoded in the public components. Each enabled link opens in a new tab from the footer and the home social section.</p>
                       <form onSubmit={(e) => { e.preventDefault(); adminSave(() => saveSettings(settingsForm), 'Social links saved. The public footer and social section are updated.') }}>
                         {(['facebook', 'instagram', 'youtube', 'tiktok'] as const).map((k) => (
-                          <div key={k}>
+                          <div key={k} style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
                             <label>{k.charAt(0).toUpperCase() + k.slice(1)} URL</label>
                             <input placeholder={`https://${k}.com/…`} value={settingsForm.socialLinks[k].url} onChange={(e) => setSettingsForm({ ...settingsForm, socialLinks: { ...settingsForm.socialLinks, [k]: { ...settingsForm.socialLinks[k], url: e.target.value } } })} />
-                            <p><label><input type="checkbox" checked={settingsForm.socialLinks[k].enabled} onChange={(e) => setSettingsForm({ ...settingsForm, socialLinks: { ...settingsForm.socialLinks, [k]: { ...settingsForm.socialLinks[k], enabled: e.target.checked } } })} /> Show this link on the public site</label></p>
+                            <label><input type="checkbox" checked={settingsForm.socialLinks[k].enabled} onChange={(e) => setSettingsForm({ ...settingsForm, socialLinks: { ...settingsForm.socialLinks, [k]: { ...settingsForm.socialLinks[k], enabled: e.target.checked } } })} /> Show this link on the public site</label>
                           </div>
                         ))}
                         <p><button className="btn" type="submit" disabled={saving}>Save social links</button></p>
@@ -811,8 +822,8 @@ export default function App() {
                         <label>Footer text</label><input value={settingsForm.footerText} onChange={(e) => setSettingsForm({ ...settingsForm, footerText: e.target.value })} />
                         <p><button className="btn" type="submit" disabled={saving}>Save club settings</button></p>
                       </form>
-                      <h3>Branding</h3>
-                      <p className="muted small">Dark Navy #061A23, Deep Teal #00A99D, Bright Teal #00D5C0, White #FFFFFF, Muted Gray #A7B5BA — defined in <code>src/styles.css</code>. Colours are not editable from the admin panel, so the club identity cannot drift by accident.</p>
+                      <h3 style={{marginTop: '2rem'}}>Branding</h3>
+                      <p className="muted small">Dark Navy #061321, Deep Teal #00E6C3, White #F5F7FA — defined in <code>src/styles.css</code>. Colours are not editable from the admin panel, so the club identity cannot drift by accident.</p>
                     </div>
                   )}
                 </div>
@@ -826,9 +837,9 @@ export default function App() {
         <div className="modal-back" onClick={() => setSelectedPlayer(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <button className="close" onClick={() => setSelectedPlayer(null)}>Close</button>
-            {selectedPlayer.portraitUrl && <img className="preview-img" src={selectedPlayer.portraitUrl} alt={`${selectedPlayer.name} portrait`} />}
+            {selectedPlayer.portraitUrl && <img className="preview-img" style={{maxHeight:'150px'}} src={selectedPlayer.portraitUrl} alt={`${selectedPlayer.name} portrait`} />}
             <span className="tag">{selectedPlayer.position}</span>
-            <h2>{selectedPlayer.name}</h2>
+            <h2 style={{color: 'var(--accent-teal)'}}>{selectedPlayer.name}</h2>
             <p><strong>Jersey number:</strong> {selectedPlayer.number}</p>
             <p><strong>Nationality:</strong> {selectedPlayer.nationality}</p>
             {ageFromDob(selectedPlayer.dateOfBirth) !== null && <p><strong>Age:</strong> {ageFromDob(selectedPlayer.dateOfBirth)}</p>}
@@ -837,7 +848,7 @@ export default function App() {
             {(selectedPlayer.appearances !== null || selectedPlayer.goals !== null || selectedPlayer.assists !== null) && (
               <p><strong>Record:</strong> {selectedPlayer.appearances ?? '—'} appearances • {selectedPlayer.goals ?? '—'} goals • {selectedPlayer.assists ?? '—'} assists</p>
             )}
-            <p>{selectedPlayer.bio}</p>
+            <p style={{marginTop: '1rem'}}>{selectedPlayer.bio}</p>
             {dataSource === 'sample' && <p className="muted small">Sample placeholder profile. Replace with real player information.</p>}
           </div>
         </div>
@@ -846,11 +857,11 @@ export default function App() {
         <div className="modal-back" onClick={() => setSelectedArticle(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <button className="close" onClick={() => setSelectedArticle(null)}>Close</button>
-            {selectedArticle.imageUrl && <img className="preview-img" src={selectedArticle.imageUrl} alt="" />}
+            {selectedArticle.imageUrl && <img className="news-img" src={selectedArticle.imageUrl} alt="" />}
             <span className="tag sample">{selectedArticle.category}</span>
-            <h2>{selectedArticle.title}</h2>
+            <h2 style={{color: 'var(--accent-teal)'}}>{selectedArticle.title}</h2>
             <p className="muted small">{selectedArticle.date}</p>
-            <p>{selectedArticle.body}</p>
+            <p style={{marginTop: '1rem', whiteSpace: 'pre-wrap'}}>{selectedArticle.body}</p>
             {dataSource === 'sample' && <p className="muted small">Sample article. Replace with real club news.</p>}
           </div>
         </div>
@@ -860,11 +871,11 @@ export default function App() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <button className="close" onClick={() => setSelectedMatch(null)}>Close</button>
             <span className="tag">{selectedMatch.competition || selectedMatch.homeOrAway}</span>
-            <h2>BRS vs {selectedMatch.opponent}</h2>
-            {selectedMatch.status === 'completed' || selectedMatch.status === 'live' ? <p className="score">BRS {selectedMatch.brsScore ?? '—'} — {selectedMatch.opponentScore ?? '—'} {selectedMatch.opponent}</p> : <p className="score">vs {selectedMatch.opponent}</p>}
+            <h2 style={{color: 'var(--accent-teal)'}}>BRS vs {selectedMatch.opponent}</h2>
+            {selectedMatch.status === 'completed' || selectedMatch.status === 'live' ? <p style={{fontFamily:'Oswald, sans-serif', fontSize:'2rem'}}>BRS {selectedMatch.brsScore ?? '—'} — {selectedMatch.opponentScore ?? '—'} {selectedMatch.opponent}</p> : <p style={{fontFamily:'Oswald, sans-serif', fontSize:'1.5rem'}}>vs {selectedMatch.opponent}</p>}
             <p className="muted small">{selectedMatch.date} • Kickoff {selectedMatch.kickoff} • {selectedMatch.venue}</p>
-            {selectedMatch.goalscorers && <p><strong>Goalscorers:</strong> {selectedMatch.goalscorers}</p>}
-            {selectedMatch.report && <p>{selectedMatch.report}</p>}
+            {selectedMatch.goalscorers && <p style={{marginTop: '1rem'}}><strong>Goalscorers:</strong> {selectedMatch.goalscorers}</p>}
+            {selectedMatch.report && <p style={{marginTop: '1rem', whiteSpace: 'pre-wrap'}}>{selectedMatch.report}</p>}
           </div>
         </div>
       )}
@@ -878,7 +889,7 @@ export default function App() {
           </div>
           <div>
             <p><strong>Explore</strong></p>
-            {PAGES.map((p) => <p key={p.id} style={{ margin: '4px 0' }}><button style={{ background: 'none', border: 0, color: 'var(--bright)', padding: 0 }} onClick={() => go(p.id)}>{p.label}</button></p>)}
+            {PAGES.map((p) => <p key={p.id} style={{ margin: '4px 0' }}><button style={{ background: 'none', border: 0, color: 'var(--accent-teal)', textTransform: 'uppercase', fontFamily: 'Oswald, sans-serif', padding: 0, cursor: 'pointer' }} onClick={() => go(p.id)}>{p.label}</button></p>)}
           </div>
           <div>
             <p><strong>Contact</strong></p>
@@ -887,11 +898,11 @@ export default function App() {
               {settings.contactPhone ? <>Phone: {settings.contactPhone}<br /></> : <>Phone: To be confirmed<br /></>}
               {settings.location ? <>Location: {settings.location}<br /></> : <>Location: To be confirmed<br /></>}
             </p>
-            <SocialLinks links={settings.socialLinks} dark />
-            <p><button className="btn smallbtn ghost" onClick={() => go('admin')}>Admin</button></p>
+            <SocialLinks links={settings.socialLinks} />
+            <p style={{marginTop: '1.5rem'}}><button className="btn smallbtn ghost" onClick={() => go('admin')}>Admin</button></p>
           </div>
         </div>
-        <div className="wrap"><p className="muted small">© {settings.clubName}. {dataSource === 'sample' ? 'Sample data only in this build until Supabase is connected — see Admin → Setup.' : 'Live data from Supabase.'}</p></div>
+        <div className="wrap"><p className="muted small" style={{textAlign: 'center', paddingBottom: '1rem'}}>© {settings.clubName}. {dataSource === 'sample' ? 'Sample data only in this build until Supabase is connected — see Admin → Setup.' : 'Live data from Supabase.'}</p></div>
       </footer>
     </div>
   )
@@ -926,13 +937,13 @@ function ContactForm({ clubName, contactEmail }: { clubName: string; contactEmai
       <label htmlFor="c-subject">Subject</label>
       <input id="c-subject" value={contact.subject} onChange={(e) => setContact({ ...contact, subject: e.target.value })} />
       <label htmlFor="c-message">Message</label>
-      <textarea id="c-message" value={contact.message} onChange={(e) => setContact({ ...contact, message: e.target.value })} />
+      <textarea id="c-message" rows={4} value={contact.message} onChange={(e) => setContact({ ...contact, message: e.target.value })} />
       {errors.length > 0 && <div className="banner backend" role="alert">{errors.map((er) => <div key={er}>{er}</div>)}</div>}
       <p style={{ marginTop: 16 }}><button className="btn" type="submit">Prepare message draft</button></p>
       {draft && (
-        <div>
+        <div style={{ marginTop: '1.5rem', background: 'var(--bg-navy)', padding: '1rem', border: '1px solid var(--border-color)' }}>
           <p><strong>Message draft prepared.</strong> It was not sent.</p>
-          <pre style={{ whiteSpace: 'pre-wrap', background: '#0B2531', padding: 12, fontSize: '.85rem' }}>{draft}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', padding: '12px 0', fontSize: '.85rem' }}>{draft}</pre>
           <button type="button" className="btn smallbtn" onClick={() => navigator.clipboard?.writeText(draft).catch(() => {})}>Copy draft</button>{' '}
           <button type="button" className="btn smallbtn ghost" onClick={download}>Download draft</button>
         </div>
