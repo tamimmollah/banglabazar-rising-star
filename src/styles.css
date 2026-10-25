@@ -1,11 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Preserve Tailwind functionality if active in your build pipeline */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Brand Colors */
+  /* Premium European Football Club Colors */
   --bg-midnight: #06111F;
   --bg-surface: #0A1928;
   --bg-surface-hover: #11263c;
@@ -15,73 +16,117 @@
   --border-subtle: rgba(247, 250, 252, 0.1);
 }
 
-html {
-  scroll-behavior: smooth;
+/* 1. Global Reset & Box Sizing (Fixes Layout Distortion) */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-body {
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
   background-color: var(--bg-midnight);
   color: var(--text-white);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
-/* Typography */
+/* 2. Critical Image Constraints (Fixes Oversized Crest) */
+img, svg, picture, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Strict targeting for navigation logos and club crests */
+.logo, .crest, nav img, header img[alt*="logo" i], header img[alt*="crest" i] {
+  max-width: 70px !important;
+  max-height: 70px !important;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* 3. Typography Defaults (Fixes Tiny Hero Content) */
 .font-editorial {
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 0.05em;
+  line-height: 1.1;
 }
 
-/* Cinematic Hero Overlay */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  color: var(--text-white);
+}
+
+/* 4. Cinematic Hero Overlay */
 .hero-overlay {
   background: linear-gradient(
     to bottom,
     rgba(6, 17, 31, 0.3) 0%,
-    rgba(6, 17, 31, 0.8) 60%,
+    rgba(6, 17, 31, 0.8) 70%,
     rgba(6, 17, 31, 1) 100%
   );
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-/* Animations */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* 5. Component Safe-Defaults (Fallback Layouts) */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.animate-fade-up {
-  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.hero, header {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-
-/* Premium Card Hover States */
+/* 6. Premium Card Interactions & Squad Presentation */
 .premium-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  overflow: hidden;
 }
 
 .premium-card:hover {
   background-color: var(--bg-surface-hover);
-  border-color: rgba(0, 229, 195, 0.3);
+  border-color: rgba(0, 229, 195, 0.4);
   transform: translateY(-4px);
 }
 
 .player-image-container {
   overflow: hidden;
+  position: relative;
+  background-color: var(--bg-surface);
 }
 
 .player-image-container img {
-  transition: transform 0.7s ease;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
 }
 
 .premium-card:hover .player-image-container img {
   transform: scale(1.05);
 }
 
-/* Custom Scrollbar */
+/* 7. Subtle Entrance Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 8. Custom Minimalist Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
