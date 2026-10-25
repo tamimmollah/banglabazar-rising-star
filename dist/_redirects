@@ -1,0 +1,9 @@
+/* Cloudflare Pages SPA fallback: every route serves index.html */
+  /admin  /index.html  200
+  /squad  /index.html  200
+  /management  /index.html  200
+  /matches  /index.html  200
+  /stats  /index.html  200
+  /news  /index.html  200
+  /contact  /index.html  200
+/*  /index.html  200

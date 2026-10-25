@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "description": "Official website project for BANGLABAZAR RISING STAR (BRS) \u2014 public club site plus real Supabase Auth admin panel (v2). Live database connection requires the owner Supabase project; see BACKEND_STATUS.md.",
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.0"
+  },
+  "name": "banglabazar-rising-star",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "type": "module",
+  "version": "1.0.0"
+}
